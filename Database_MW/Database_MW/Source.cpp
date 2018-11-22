@@ -1,26 +1,19 @@
 /*
-Kod zosta³ napisany w brzydki sposób, ka¿da zawartoœæ "if" z menu powinna byæ w osobnej funkcji. Wieczorem Ci to poprawiê.
 
-W opicji wyszukiwania brakuje wypisywanie ca³ej linii.
+Dalej nie jest to najlepszy program. Nie posiada on ¿adnych wyj¹tków dla wpisania przez u¿ytkownika znaku innego ni¿ dany typ
+Ca³oœæ powinna zostaæ rozbita na mniejsze pliki
+Nie czyœci³em kodu, jeœli s¹ w nim jakieœ pozosta³oœci, niepotrzebne komentarze, niepotrzebne definicje to przepraszam.
 
-Kod zadzia³a chyba popawnie tylko na Windowsie ze wzglêdu na local files i polskie znaki
+W razie problemu ze zrozumieniem czegoœ pytaj œmia³o.
 
-Stara³em siê komentowaæ ka¿d¹ liniê, jeœli nie ma komentarza oznacza to, ¿e uzna³em coœ za truizm, jak czegoœ nie rozumiesz pytaj na fb.
-
-Jak dasz kod z zajêæ to mogê go gdzieœ wcisn¹æ tutaj, przerobiæ ten program aby pasowa³. Teraz jest to prosta aplikacja terminalowa która spe³nia podstawowe rzeczy o jakich mi pisa³aœ
-> plik tekstowy
-> dodawanie do bazy danych
-> szukanie w bazie danych
-> wypisuje plik tekstowy
-> ma jakieœ tam proste menu
-> ma zapêtlone menu z opcj¹ wyjœcia
-> po ka¿dej operacji zapisuje zmiany w pliku w celu nie utracenia czegoœ gdy zamiast wyboru kliknie ktoœ "x"
-> nie zaimplementowa³em na razie usuwania wybranej linii
-> dopisa³em wypisywanie informacji o wielkoœci pliku, dopiszê tam jeszcze iloœæ linii w pliku i inne pierdo³y jakie mi wpadn¹ do g³osy
-
-Przepraszam, ¿e bez pytania Ciebie zrobi³em chyba czêœæ twojego projektu ale nudzi mi siê i nie mam co robiæ XD
-
-Osobiœcie u¿ywam Visual Studio do programowania, jak masz jakieœ problemy z kompilowaniem/wyœwietlaniem/edytowaniem u siebie daj znaæ to naprawiê
+Funkcjonalnoœæ: 
+> Odczyt/zapis do pliku tekstowego
+> Pobieranie od u¿ytkownika danych
+> Usunie danych u¿ytkownika
+> Usunie bazy danych
+> Wypisanie na ekranie bazy danych
+> Wyœwietlenie informacji o pliku bazy danych
+> Wyszukiwanie w bazie danych
 
 Adrian~
 */
@@ -31,6 +24,122 @@ Adrian~
 #include <string> // Operacje na ci¹gach znaków
 
 using namespace std;
+
+void add_user(ofstream& bazadanych) { // Funkcja odpowiada za dodanie u¿ytkownika
+	// Ta baza danych zawiera informacjê o imieniu, nazwisku, roku urodzenia ludzi 
+	// imiê, nazwisko to string, rok urodzenia to int,  
+	string imie,
+		nazwisko;
+	int rok_urodzenia;
+
+	// Pobieranie danych, przekazanie do zmiennych
+	cout << "Dodaj dane" << endl;
+	cout << "Podaj imiê: " << endl;
+	cin >> imie;
+
+	cout << "Podaj nazwisko: " << endl;
+	cin >> nazwisko;
+
+	cout << "Podaj rok urodzenia: " << endl;
+	cin >> rok_urodzenia;
+	cin.get();
+
+	// Przekazanie zmiennych do pliku tekstowego
+	bazadanych << imie << " " << nazwisko << " " << rok_urodzenia << "\n";
+
+	cout << "Do bazy danych zosta³y dodane nastêpuj¹ce wartoœci: " << imie << " " << nazwisko << " " << rok_urodzenia << endl;
+}
+
+void delete_line(ifstream& bazadanych) {
+	string line; //Musimy iterowaæ po danej linii
+	int index = 1, //indeksujê od 1 bazê danych od pocz¹tku
+		line_to_delete = 0; // muszê zainicjalizowaæ zmienn¹, 
+
+	// w C++ najprostszym sposobem usuniêcia wybranej linii jest przepisanie ca³ego pliku jeszcze raz z zast¹pieniem wybranej linii pust¹
+	// moim zdaniem najprostszym sposodem jest iterowanie po wszystkich liniach ze stworzeniem specjalnego indexu/countera który bêdzie wskazywa³ na dan¹ liniê
+	// w starszych wersjach jêzyka mo¿na by³o to za³atwiæ za pomoc¹ jednej funkcji podana_linia.replace(pocz¹tek_linii, koniec_lini, "") lecz w nowszych to nie dzia³a
+	// poniewa¿ zosta³y zmienione typy danych w funkcji replace (a przynajmniej u mnie nie dzia³a albo ja nie umiem tego napisaæ proœciej)
+
+	// na pocz¹tku tworzê tymczasowu plik temp.txt
+	ofstream temp; //stwórz plik temp
+	temp.open("temp.txt"); //otwórz go
+
+	// pobieram od u¿ytkownika któr¹ liniê chce usun¹æ
+	cout << "Któr¹ liniê chcesz usun¹æ?" << endl;
+	cin >> line_to_delete;
+	
+	if (bazadanych.is_open()) {  // jeœli plik jest otwarty...
+		while (getline(bazadanych, line)) { // dopóki znajduj¹ siê linie w pliku bazadanych...
+			if (line_to_delete == index) { //jeœli linia któr¹ u¿ytkownik chce usun¹æ jest zgodna z naszym indeksowaniem linii 
+				line.erase(line.begin(), line.end()); // wyma¿ liniê w sensie usuniêcia ca³oœci zawartoœci ci¹gu znaków,
+													  // efekt uboczny to pozostawienie pustego ci¹gu znaków, ni¿ej jest na to rozwi¹zanie
+			}
+
+			index++; //zwiêksz indeks co iteracjê
+
+			if (!line.empty()) { // tu rozwi¹zanie na pusty ci¹g znaków; jeœli linia nie jest pusta czyli nie znajduje siê w niej ¿aden znak
+				temp << line << endl; //przepisz od nowa plik do tymczasowego pliku z pominiêciem tej linii
+			}
+		}
+	}
+
+	temp.close(); //zamknij tymczasowy plik
+	bazadanych.close(); //zamknij bazê danych
+
+	remove("database.txt"); //usuñ bazê danych 
+	rename("temp.txt","database.txt"); // zmieñ nazwê pliku tymczasowego na bazê danych
+}
+
+void print_database(ifstream& bazadanych) { // funkcja odpowiedzialna za wypisywanie ca³ej bazy danych z indeksami 
+	string line; // aktualnie iterowana linia
+	int index = 1; // index linii
+
+	cout << "\nIndex:" << " Imiê:" << " Nazwisko:" << " Rok urodzenia:" << endl; //header, bez dopasowania
+	if (bazadanych.is_open()) {  // jeœli plik jest otwarty...
+		while (getline(bazadanych, line)) { // dopóki znajduj¹ siê linie w pliku bazadanych...
+			cout << index << " " << line << "\n"; // wypisz liniê
+			index++;
+		}
+	}
+}
+
+void find_in_database(ifstream& bazadanych) { //funkcja odpowiedzialna za wyszukiwanie w bazie danych
+	string szukane, 
+		linia; // inicjalizacja zmiennych, szukanie oraz linia w której pojawia siê wyra¿enie
+	int currLine = 0; // Aktualnie analizowana linia
+
+	cout << "Czego szukasz? " << endl;
+	cin >> szukane;
+
+	while (getline(bazadanych, linia)) { // dopóki znajduj¹ siê linie w pliku...
+		currLine++; // zwiêksz aktualn¹ liniê o jeden
+		if (linia.find(szukane, 0) != string::npos) { // jeœli iloœæ wyszukañ nie jest równa iloœci wartoœci maksymalnej mo¿liwej wartoœci dla rozmiaru linii 
+			// aka w danej linii nie istnieje pasuj¹cy string do naszego szukanego wzorca
+			// ad1: npos to sta³a wartoœæ elementu statycznego o najwiêkszej mo¿liwej wartoœci dla elementu typu size_t.
+			cout << "Znalaz³em: " << szukane << ", w linii numer: " << currLine << endl; // wypisz co znalaz³eœ i w której linii
+		}
+	}
+}
+
+void information_about_database(ifstream& bazadanych) {
+	streampos begin, //streampos to zmianna odpowiedzialna za reprezentacjê pozycji w strumieniach danych
+		end; 
+	string line;
+	int index = 1;
+
+	begin = bazadanych.tellg(); //tellg zwraca pozycjê obecnej pozycji w strumieniu wejœcia
+	bazadanych.seekg(0, ios::end); //seekg ustawia pozycjê nastêpnego znaku
+	end = bazadanych.tellg();
+
+	while (!bazadanych.eof()) { // Dopóki to nie jest koniec pliku
+								// End of File - plik zosta³ przeczytany do koñca, b¹dŸ wyst¹pi³ b³¹d podczas próby odczytu danych.
+		getline(bazadanych, line); // Pobieraj linie z pliku tekstowego
+		index++; // Zwiêkszaj licznik
+	}
+
+	cout << "\nLiczba wpisów w bazie danych: " << index << endl;
+	cout << "Rozmiar pliku bazy danych: " << (end - begin) << " bajtów.\n" << endl;
+}
 
 int main() {
 	setlocale(LC_CTYPE, "Polish"); // Dodanie polskich znaków, nie mam pewnoœci ale dzia³a chyba tylko na Windowsie
@@ -50,6 +159,7 @@ int main() {
 		cout << "3 - Wypisz bazê danych" << endl;
 		cout << "4 - Wyszukaj w bazie danych" << endl;
 		cout << "5 - Informacje o pliku bazy danych" << endl;
+		cout << "6 - Usuñ bazê danych " << endl;
 		cout << "0 - WyjdŸ z aplikacji\n" << endl;
 
 		// Pobranie od u¿ytkownika zmiennej
@@ -60,86 +170,55 @@ int main() {
 
 			// Otwarcie pliku tekstowego
 			ofstream bazadanych;
-			bazadanych.open("database.txt", ios::app); // W razie braku pliku, tworzy go w katalogu domowym programu
+			bazadanych.open("database.txt", ios::app); // W razie braku pliku, tworzy go w katalogu domowym programu, 
+													   // ios::app potrzebne aby w razie istnienia pliku wykorzystywa³ go zamiast tworzyæ nowy
 
-			// Ta baza danych zawiera informacjê o imieniu, nazwisku, roku urodzenia ludzi 
-			// imiê, nazwisko to string, rok urodzenia to int,  
-			string imie,
-				nazwisko;
-			int rok_urodzenia;
+			add_user(bazadanych); // Wywo³anie funkcji 
 
-			// Pobieranie danych, przekazanie do zmiennych
-			cout << "Dodaj dane" << endl;
-			cout << "Podaj imiê: " << endl;
-			cin >> imie;
-
-			cout << "Podaj nazwisko: " << endl;
-			//cin.getline(cin, nazwisko);
-			cin >> nazwisko;
-
-			cout << "Podaj rok urodzenia: " << endl;
-			cin >> rok_urodzenia;
-			cin.get();
-
-			// Przekazanie zmiennych do pliku tekstowego
-			bazadanych << imie << " " << nazwisko << " " << rok_urodzenia << "\n";
-
-			cout << "Do bazy danych zosta³y dodane nastêpuj¹ce wartoœci: " << imie << " " << nazwisko << " " << rok_urodzenia << endl;
-			bazadanych.close();
+			bazadanych.close(); // Zamknij plik
 		}
 		else if (user_choice == 2) {
 			cout << "Usuñ dane" << endl;
+
+			ifstream bazadanych("database.txt"); // Otwórz plik tekstowy
+
+			delete_line(bazadanych); // Wywo³anie funkcji
 		}
 		else if (user_choice == 3) {
 			cout << "Wypisujê bazê danych...\n" << endl;
 
-			string line; // aktualnie iterowana linia
-
 			// Otwarcie pliku tekstowego
 			ifstream bazadanych("database.txt");
-
-			if (bazadanych.is_open()) {  // jeœli plik jest otwarty...
-				while (getline(bazadanych, line)) { // dopóki znajduj¹ siê linie w pliku bazadanych...
-					cout << line << "\n"; // wypisz liniê
-				}
-			}
+			 
+			print_database(bazadanych); // Wywo³anie funkcji
 
 			bazadanych.close(); // zamknij plik
 		}
 		else if (user_choice == 4) {
-			// Otwarcie pliku tekstowego
-			ifstream bazadanych("database.txt");
-
 			cout << "Wyszukaj w bazie danych" << endl;
-			string szukane, linia; // inicjalizacja zmiennych, szukanie oraz linia w której pojawia siê wyra¿enie
-			int currLine = 0; // Aktualnie analizowana linia
+			// Otwarcie pliku tekstowego
+			ifstream bazadanych("database.txt"); 
 
-			cout << "Czego szukasz? " << endl;
-			cin >> szukane;
-
-			while (getline(bazadanych, linia)) { // dopóki znajduj¹ siê linie w pliku...
-				currLine++; // zwiêksz aktualn¹ liniê o jeden
-				if (linia.find(szukane, 0) != string::npos) { // jeœli iloœæ wyszukañ nie jest równa iloœci wartoœci maksymalnej mo¿liwej wartoœci dla rozmiaru linii 
-					// aka w danej linii nie istnieje pasuj¹cy string do naszego szukanego wzorca
-					// ad1: npos to sta³a wartoœæ elementu statycznego o najwiêkszej mo¿liwej wartoœci dla elementu typu size_t.
-					cout << "Znalaz³em: " << szukane << ", w linii numer: " << currLine << endl; // wypisz co znalaz³eœ i w której linii
-				}
-			}
+			find_in_database(bazadanych); // Wywo³anie funkcji
 
 			bazadanych.close(); // zamknij plik
 		}
 		else if (user_choice == 5) {
-			streampos begin, end;
 			ifstream bazadanych("database.txt");
 
-			begin = bazadanych.tellg();
-			bazadanych.seekg(0, ios::end);
-			end = bazadanych.tellg();
+			information_about_database(bazadanych); // Wywo³anie funkcji
 
 			bazadanych.close();
+		}
+		else if (user_choice == 6) {
+			string user_decission;
 
-			cout << "Rozmiar pliku bazy danych: " << (end-begin) << " bajtów.\n" << endl;
+			cout << "Czy na pewno chcesz usun¹æ bazê danych (Y/N)?" << endl;
+			cin >> user_decission;
 
+			if (user_decission == "Y") {
+				remove("database.txt");
+			}
 		}
 		else if (user_choice == 0) {
 			is_running = false; // Zmiana wartoœci bool odpowiedzialnej za uruchomienie programu
@@ -147,11 +226,8 @@ int main() {
 			// Po¿egnanie z u¿ytkownikiem, zamkniêcie okna
 			cout << "\nDo zobaczenia!" << endl;
 			cout << "Naciœnij klawisz [Enter] aby zamkn¹æ okno...\n" << endl;
-
 		}
 	}
-
-	//bazadanych.close(); //Zamkniêcie pliku tekstowego
 
 	cin.get();
 	return 0;
